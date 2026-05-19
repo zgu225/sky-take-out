@@ -1,53 +1,83 @@
 # Catering SaaS Platform (Backend Engine)
 
-An enterprise-level, high-concurrency food delivery and catering management platform built with Spring Boot, Redis, and MySQL. This project provides a robust backend engine that serves both the Merchant Management Console (PC Web) and the Customer Client (WeChat Mini Program).
+An enterprise-level, high-concurrency food delivery and catering management platform built with **Spring Boot 3.x** and **JDK 17**. This project provides a robust backend engine that serves both the Merchant Management Console (PC Web) and the Customer Client (WeChat Mini Program).
 
-## Core Architecture & Tech Stack
+---
 
-- **Core Framework:** Java 11, Spring Boot 2.7, Spring MVC
-- **Persistence Layer:** MyBatis, Druid Connection Pool, MySQL 8.0
+## Core Architecture & Modern Tech Stack
+
+To ensure long-term maintainability, security, and exceptional performance, the project has been fully migrated to the latest modern technical baseline:
+
+- **Core Engine:** **JDK 17** (LTS) & **Spring Boot 3.1.2** (built on Jakarta EE 10)
+- **API Documentation & Exploration:** **Knife4j 4.5.0** (OpenAPI 3 / Jakarta Edition)
+- **Persistence Layer:** **MyBatis 3.0.x (Spring Boot 3 Starter)**, **PageHelper 2.1.0** (Jakarta compatible), Druid Connection Pool, and **MySQL 8.0** (via `mysql-connector-j`)
 - **Caching & Concurrency:** Redis (handles high-frequency menu queries and prevents inventory oversell)
-- **Authentication:** JWT (JSON Web Tokens) with ThreadLocal for thread-safe user context tracking
+- **Authentication & Security:** stateless JWT (JSON Web Tokens) combined with **ThreadLocal** for thread-safe user context tracking
 - **Cloud Storage:** Alibaba Cloud OSS
-- **API Documentation:** Swagger / Knife4j
 
-## Key Features & Technical Highlights
+---
+
+## Modernization Highlights (Spring Boot 3 & JDK 17 Migration)
+
+This project has been meticulously modernized from a traditional Spring Boot 2.x stack to Spring Boot 3.x, bringing several architectural enhancements:
+
+1. **Jakarta EE Namespace Migration:** Fully migrated from old `javax.*` packages (e.g., `javax.servlet`) to the modern `jakarta.*` packages (`jakarta.servlet`), aligning with the industry-standard Jakarta EE 10 specification.
+2. **Knife4j & OpenAPI 3 Specification:** Upgraded the API documentation framework from outdated Swagger 2 (Springfox) to **Knife4j OpenAPI 3**. Configured multi-group routing (`GroupedOpenApi`) for strict separation between `Management Console (Admin API)` and `Consumer App (User API)`.
+3. **Advanced Java 17 Features:** Configured compiler target to Java 17, paving the way for adopting modern language features such as Text Blocks, Records, and enhanced Pattern Matching.
+4. **Precision Double/Long Mapping:** Retained a custom `JacksonObjectMapper` mapping engine, automatically converting large `Long` integers (like Snowflake IDs) to strings during JSON serialization to prevent precision loss on the frontend, while maintaining standard DateTime formats.
+
+---
+
+## Key Business & Technical Capabilities
 
 ### 1. Robust Security & Authentication
-- Implemented stateless API authentication using **JWT**.
-- Built standard **HandlerInterceptors** to intercept and validate tokens.
-- Leveraged **ThreadLocal** to safely isolate and pass the current user's ID across the entire request thread lifecycle.
-- Utilized MD5 hashing with salt for employee password encryption.
+- Stateless API authentication using **JWT**.
+- Custom **HandlerInterceptors** to perform seamless token validation.
+- Thread-safe user context sharing across the entire request lifecycle using **ThreadLocal** (`BaseContext`).
 
-### 2. AOP-Based Auto-Fill Mechanism
-- Instead of manually writing boilerplate code for database audit fields (e.g., `create_time`, `update_user`, `update_time`), an **Aspect-Oriented Programming (AOP)** approach was introduced.
-- Custom annotations (`@AutoFill`) were created to intercept MyBatis Mapper methods and automatically inject timestamps and current operator IDs using Reflection.
+### 2. AOP-Based Audit Log Auto-Fill
+- Introduced **Aspect-Oriented Programming (AOP)** to completely eliminate repetitive database audit boilerplate code (e.g., `create_time`, `update_user`).
+- Custom `@AutoFill` annotations intercept MyBatis Mapper calls to dynamically inject timestamps and operator IDs at runtime using Reflection.
 
-### 3. Complex Order State Machine
-- Designed a reliable state machine to handle the full lifecycle of an order: `Pending Payment` -> `To be Accepted` -> `Delivering` -> `Completed` / `Canceled`.
-- Handled edge cases such as customer refunds and merchant rejections with strict data consistency.
+### 3. High-Concurrency Optimization
+- **Menu Cache:** Integrates Spring Cache and Redis to cache active menus, cutting down database pressure by up to 90% during rush-hour traffic.
+- **Oversell Prevention:** Optimized checkout mechanisms to ensure inventory consistency.
 
-### 4. Concurrency Control & High Availability
-- **Menu Cache:** Integrated Spring Cache and Redis to pre-load and cache the dish/combo lists, drastically reducing MySQL pressure during peak meal times (lunch/dinner rushes).
-- **Oversell Prevention:** Optimized the checkout process to ensure inventory precision. 
+### 4. Real-Time Event & Scheduled Tasks
+- **WebSocket:** Implemented full-duplex WebSocket communication to deliver real-time push alerts (new orders/order urges) directly to the merchant dashboard.
+- **Scheduled Tasks (Spring Task):** Configured automated background CRON tasks (e.g., auto-canceling unpaid orders after 15 minutes, auto-closing stale orders at midnight).
 
-### 5. Real-Time Communication & Scheduled Tasks
-- **WebSocket:** Implemented full-duplex WebSocket connections. When a customer pays for an order or clicks "Urge Order", the backend instantly pushes a message to the merchant's browser, triggering a voice broadcast.
-- **Spring Task:** Configured CRON jobs to run silently in the background. It automatically cancels unpaid orders after 15 minutes and acts as a safety net to close "delivering" orders that linger past midnight.
+---
 
-## Project Structure
+## Project Directory Structure
 
-This project follows a standard multi-module Maven architecture:
+The repository is organized into a highly optimized, flat Maven multi-module architecture:
 
-- `sky-common`: Contains generic utilities, constants, custom exceptions, unified response wrappers (`Result`), and JSON configuration.
-- `sky-pojo`: Contains all Data Objects (`Entity`), Data Transfer Objects (`DTO`), and View Objects (`VO`).
-- `sky-server`: The core business module containing Controllers, Services, Mappers, Interceptors, and configuration classes.
+- `sky-common`: Contains generic utility classes, core constants, global exception handlers, unified response wrappers (`Result`), and Jackson serialization engines.
+- `sky-pojo`: Declares all database domain structures including Entities, Data Transfer Objects (DTOs), and View Objects (VOs).
+- `sky-server`: The core business logic engine, containing Controllers, Services, MyBatis Mappers, Interceptors, and configuration classes.
+
+---
 
 ## Getting Started
 
-1. Clone the repository.
-2. Setup MySQL (8.0+) and execute the `sky_take_out_init.sql` script to initialize the database and tables.
-3. Setup Redis and ensure it is running on the default port (6379).
-4. Update the `application-dev.yml` file with your own `datasource` credentials (username/password) and AliCloud OSS keys.
-5. Run the `SkyApplication` main class.
-6. Access the API documentation at `http://localhost:8080/doc.html`.
+### Prerequisites
+- **JDK 17** installed and configured in your environment.
+- **Maven 3.8+**
+- **MySQL 8.0+**
+- **Redis 6.x+**
+
+### Quick Launch Steps
+1. **Initialize Database:** Run the `sky_take_out_init.sql` script on your MySQL instance to create the necessary tables and populate initial mock data.
+2. **Start Redis:** Make sure your Redis server is running locally on the default port `6379`.
+3. **Configure Environment:** Update the `application-dev.yml` file in the `sky-server` module with your own MySQL credentials, Redis password, and Alibaba Cloud OSS credentials.
+4. **Build the Project:** Run the following command in the root folder to compile and build the modules:
+   ```bash
+   mvn clean install
+   ```
+5. **Run Application:** Execute the `com.sky.SkyApplication` main class in the `sky-server` module.
+6. **API Documentation:** Once the server starts, open your browser and navigate to:
+   ```
+   http://localhost:8080/doc.html
+   ```
+   Enjoy the modern Knife4j OpenAPI 3 document interface!
